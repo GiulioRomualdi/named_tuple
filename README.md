@@ -154,7 +154,7 @@ target_link_libraries(${PROJECT_NAME} named_tuple::named_tuple)
 
 ## Bug reports and support
 
-All types of [issues](https://github.com/GiulioRomualdi/named-tuple/issues/new) are welcome.
+All types of [issues](https://github.com/GiulioRomualdi/named_tuple/issues/new) are welcome.
 
 ## Note
 This library took inspiration from https://vitiy.info/named-tuple-for-cplusplus/. Moreover `named_tuple` is Here some other projects you may be interested to follow:
