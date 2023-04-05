@@ -61,7 +61,7 @@ template <hash_type hash_, typename Type_> struct named_param
 };
 
 /**
- * named_tuple is an class that inherits from tuple. It main purpose is to make more readable and
+ * named_tuple is a class that inherits from tuple. It main purpose is to make more readable and
  * less error prone code that uses `std::tuple`.
  * \code{.cpp}
  * using namespace ntuple::literals;
@@ -69,7 +69,7 @@ template <hash_type hash_, typename Type_> struct named_param
  * auto foo = ntuple::make_named_tuple(ntuple::named_param<"name"_h, std::string>(),
  *                                     ntuple::named_param<"number"_h, int>());
  *
- * // it is still possible to access the elements of the named_tuple with Structured binding
+ * // it is still possible to access the elements of the named_tuple with structured binding
  * // declaration
  * auto& [a, b] = foo;
  * b = 150;
