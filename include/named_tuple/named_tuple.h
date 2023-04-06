@@ -86,8 +86,8 @@ template <hash_type hash_, typename Type_> struct named_param
 template <typename... Params> struct named_tuple : public std::tuple<Params...>
 {
 
-    /** Underline tuple that can be generate from this named_tuple */
-    using UnderlineTuple = std::tuple<typename Params::Type...>;
+    /** Underlying tuple that can be generate from this named_tuple */
+    using underlying_tuple = std::tuple<typename Params::Type...>;
 
     /**
      * Constructor
@@ -152,7 +152,7 @@ template <typename... Params> struct named_tuple : public std::tuple<Params...>
      * @return A reference to the selected element of t.
      */
     template <std::size_t I>
-    const typename std::tuple_element<I, UnderlineTuple>::type& get() const noexcept
+    const typename std::tuple_element<I, underlying_tuple>::type& get() const noexcept
     {
         const auto& param = (std::get<I>(static_cast<const std::tuple<Params...>&>(*this)));
         return param.param;
@@ -164,7 +164,7 @@ template <typename... Params> struct named_tuple : public std::tuple<Params...>
      * @param t the named_tuple
      * @return A reference to the selected element of t.
      */
-    template <std::size_t I> typename std::tuple_element<I, UnderlineTuple>::type& get() noexcept
+    template <std::size_t I> typename std::tuple_element<I, underlying_tuple>::type& get() noexcept
     {
         auto& param = (std::get<I>(static_cast<std::tuple<Params...>&>(*this)));
         return param.param;
@@ -177,7 +177,7 @@ template <typename... Params> struct named_tuple : public std::tuple<Params...>
      */
     template <hash_type Hash> const auto& get_from_hash() const noexcept
     {
-        constexpr std::size_t index = get_element_index<0, Hash>();
+        constexpr std::size_t index = get_element_index<Hash>();
         static_assert((index != error), "Wrong named tuple key.");
         return this->get<index>();
     }
@@ -189,7 +189,7 @@ template <typename... Params> struct named_tuple : public std::tuple<Params...>
      */
     template <hash_type Hash> auto& get_from_hash() noexcept
     {
-        constexpr std::size_t index = get_element_index<0, Hash>();
+        constexpr std::size_t index = get_element_index<Hash>();
         static_assert((index != error), "Wrong named tuple key.");
         return this->get<index>();
     }
@@ -198,9 +198,9 @@ template <typename... Params> struct named_tuple : public std::tuple<Params...>
      * Return the associated std::tuple
      * @return the tuple associated to the named_tuple
      */
-    UnderlineTuple to_tuple() const noexcept
+    underlying_tuple to_tuple() const noexcept
     {
-        UnderlineTuple temp;
+        underlying_tuple temp;
         this->copy_to_tuple(temp);
         return temp;
     }
@@ -213,7 +213,7 @@ private:
      */
     template <std::size_t I = 0, typename... Args>
     inline typename std::enable_if<I == sizeof...(Params), void>::type
-    copy_to_tuple(UnderlineTuple& t) const
+    copy_to_tuple(underlying_tuple& t) const
     {
     }
 
@@ -224,7 +224,7 @@ private:
      */
     template <std::size_t I = 0, typename... Args>
     inline typename std::enable_if<(I < sizeof...(Params)), void>::type
-    copy_to_tuple(UnderlineTuple& t) const
+    copy_to_tuple(underlying_tuple& t) const
     {
         // copy each element
         std::get<I>(t) = this->get<I>();
@@ -261,7 +261,7 @@ private:
      * @return an error flag.
      * @note In this function is returned means that the hash has not be found.
      */
-    template <std::size_t I = 0, hash_type Hash>
+    template <hash_type Hash, std::size_t I = 0>
     constexpr typename std::enable_if<I == sizeof...(Params),
                                       const std::size_t>::type static get_element_index() noexcept
     {
@@ -274,16 +274,16 @@ private:
      * @note This function is resolved at compile time. So if the hash is not found an error flag
      * will be returned.
      */
-    template <std::size_t I = 0, hash_type Hash>
+    template <hash_type Hash, std::size_t I = 0>
     constexpr typename std::enable_if<(I < sizeof...(Params)),
                                       const std::size_t>::type static get_element_index() noexcept
     {
-        using elementType = typename std::tuple_element<I, std::tuple<Params...>>::type;
-        if constexpr (Hash == elementType::hash)
+        using element_type = typename std::tuple_element<I, std::tuple<Params...>>::type;
+        if constexpr (Hash == element_type::hash)
         {
             return I;
         }
-        return get_element_index<I + 1, Hash>();
+        return get_element_index<Hash, I + 1>();
     }
 
     static constexpr std::size_t error = -1;
@@ -330,9 +330,7 @@ namespace std
  * @return A reference to the selected element of t.
  */
 template <std::size_t I, typename... Params>
-typename std::tuple_element<
-    I,
-    typename ::ntuple::named_tuple<Params...>::UnderlineTuple>::type&
+typename std::tuple_element<I, typename ::ntuple::named_tuple<Params...>::underlying_tuple>::type&
 get(::ntuple::named_tuple<Params...>& t) noexcept
 {
     return t.template get<I>();
@@ -345,9 +343,7 @@ get(::ntuple::named_tuple<Params...>& t) noexcept
  * @return A reference to the selected element of t.
  */
 template <std::size_t I, typename... Params>
-const typename tuple_element<
-    I,
-    typename ::ntuple::named_tuple<Params...>::UnderlineTuple>::type&
+const typename tuple_element<I, typename ::ntuple::named_tuple<Params...>::underlying_tuple>::type&
 get(const ::ntuple::named_tuple<Params...>& t) noexcept
 {
     return t.template get<I>();
@@ -358,8 +354,7 @@ get(const ::ntuple::named_tuple<Params...>& t) noexcept
  * binding declaration
  */
 template <typename... Params>
-struct tuple_size<::ntuple::named_tuple<Params...>>
-    : integral_constant<size_t, sizeof...(Params)>
+struct tuple_size<::ntuple::named_tuple<Params...>> : integral_constant<size_t, sizeof...(Params)>
 {
 };
 
@@ -369,8 +364,7 @@ struct tuple_size<::ntuple::named_tuple<Params...>>
  */
 template <size_t Index, typename... Params>
 struct tuple_element<Index, ::ntuple::named_tuple<Params...>>
-    : std::tuple_element<Index,
-                         typename ::ntuple::named_tuple<Params...>::UnderlineTuple>
+    : std::tuple_element<Index, typename ::ntuple::named_tuple<Params...>::underlying_tuple>
 {
 };
 
